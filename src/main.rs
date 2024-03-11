@@ -10,6 +10,10 @@ enum TileTypes {
     URB,
     RBL,
     UBL,
+    UR,
+    BR,
+    BL,
+    UL,
 }
 
 fn main() {
@@ -18,18 +22,38 @@ fn main() {
     let urb = url.rotate_90(TileTypes::URB);
     let rbl = url.rotate_180(TileTypes::RBL);
     let ubl = url.rotate_270(TileTypes::UBL);
+    let ur = Tile::new(TileTypes::UR, vec![1], vec![1], vec![0], vec![0]);
+    let br = ur.rotate_90(TileTypes::BR);
+    let bl = ur.rotate_180(TileTypes::BL);
+    let ul = ur.rotate_270(TileTypes::UL);
 
-    let model = TileModel::<TileTypes, u8>::new(vec![blank, url, urb, rbl, ubl]);
+    let model = TileModel::<TileTypes, u8>::new(vec![blank, url, urb, rbl, ubl, ur, br, bl, ul]);
 
-    let width = 4;
-    let height = 4;
-    let tileset = model.generate(width, height, 52838673823);
+    let width = 16;
+    let height = 16;
+    let tileset = model.generate(width, height, 0);
 
     let blank_img = Reader::open("images/blank.png").unwrap().decode().unwrap();
     let up_img = Reader::open("images/up.png").unwrap().decode().unwrap();
     let right_img = Reader::open("images/right.png").unwrap().decode().unwrap();
     let down_img = Reader::open("images/down.png").unwrap().decode().unwrap();
     let left_img = Reader::open("images/left.png").unwrap().decode().unwrap();
+    let up_right_img = Reader::open("images/top_right.png")
+        .unwrap()
+        .decode()
+        .unwrap();
+    let down_right_img = Reader::open("images/bottom_right.png")
+        .unwrap()
+        .decode()
+        .unwrap();
+    let down_left_img = Reader::open("images/bottom_left.png")
+        .unwrap()
+        .decode()
+        .unwrap();
+    let up_left_img = Reader::open("images/top_left.png")
+        .unwrap()
+        .decode()
+        .unwrap();
 
     let tile_width = blank_img.width() as usize;
     let tile_height = blank_img.height() as usize;
@@ -40,13 +64,17 @@ fn main() {
     img_map.insert(TileTypes::URB, right_img);
     img_map.insert(TileTypes::RBL, down_img);
     img_map.insert(TileTypes::UBL, left_img);
+    img_map.insert(TileTypes::UR, up_right_img);
+    img_map.insert(TileTypes::BR, down_right_img);
+    img_map.insert(TileTypes::BL, down_left_img);
+    img_map.insert(TileTypes::UL, up_left_img);
 
     let bytes_len = width * tile_width * height * tile_height * 4;
     let mut bytes: Vec<u8> = Vec::with_capacity(bytes_len);
     unsafe {
         bytes.set_len(bytes_len);
     }
-    bytes.fill(0 as u8);
+    bytes.fill(0);
 
     for y in 0..height {
         for x in 0..width {
@@ -77,7 +105,7 @@ fn main() {
     }
 
     image::save_buffer(
-        "new_output.png",
+        "output.png",
         &bytes,
         (width * tile_width) as u32,
         (height * tile_height) as u32,
